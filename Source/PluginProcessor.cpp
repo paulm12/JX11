@@ -208,7 +208,14 @@ void JX11AudioProcessor::handleMIDI(uint8_t data0, uint8_t data1, uint8_t data2)
 //    char s[16];
 //    snprintf(s, 16, "%02hhX %02hhX %02hhX", data0, data1, data2);
 //    DBG(s);
-    
+    // Control Change:
+    if ((data0 & 0xF0) == 0xB0) {
+        if (data1 == 0x07) {
+            // Volume
+            float volumeCtl = float(data2) / 127.0f;
+            synth.params.changeOutputLevelNotifyHost(volumeCtl);
+        }
+    }
     // Program Change message:
     if ((data0 & 0xF0) == 0xC0) {
         if (data1 < synth.params.totalPresets()) {

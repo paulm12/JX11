@@ -35,6 +35,7 @@ class Synth {
         NoiseGenerator noiseGen;
         int lfoStep;
         float lfo;
+        int lastNote;
         bool sustainPedalPressed;
         void startNote(int v, int note, int velocity);
         void noteOn(int note, int velocity);
@@ -46,4 +47,9 @@ class Synth {
         void shiftQueuedNotes();
         int nextQueuedNote();
         void updateLFO();
+        inline void updatePeriod(Voice& voice) {
+            voice.osc1.period = voice.period * params.pitchBend;
+            voice.osc2.period = voice.osc1.period * params.detune;
+        }
+        bool isPlayingLegatoStyle() const;
 };

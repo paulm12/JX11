@@ -63,6 +63,7 @@ class Parameters {
         void setCurrentProgram(int index);
         void createDefaultPresets();
         void reset(float sampleRate);
+        void changeOutputLevelNotifyHost(float newVal);
         float oscMix;
         float detune;
         float tune;

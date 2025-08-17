@@ -34,6 +34,7 @@ void Parameters::updateParams(float sampleRate) {
         glideRate = 1.0f - std::exp(-inverseUpdateRate * std::exp(6.0f - 0.07f * glideRateTemp));
     }
     glideBend = glideBendParam->get();
+    numVoices = (polyModeParam->getIndex() == 0) ? 1 : MAX_VOICES;
     // For the detune:
     float semi = oscTuneParam->get();
     float cent = oscFineParam->get();
@@ -68,7 +69,6 @@ void Parameters::updateParams(float sampleRate) {
     } else {
         envRelease = std::exp(-inverseSampleRate * std::exp(envOffset - envMult * envRelease));
     }
-    
     // Update the noise value we have
     float noiseMixTemp = noiseParam->get() / 100.0f;
     noiseMixTemp *= noiseMixTemp;
@@ -124,6 +124,13 @@ void Parameters::setCurrentProgram(int index) {
         params[i]->setValueNotifyingHost(params[i]->convertTo0to1(preset.param[i]));
     }
 }
+
+void Parameters::changeOutputLevelNotifyHost(float newVal) {
+    outputLevelParam->beginChangeGesture();
+    outputLevelParam->setValueNotifyingHost(newVal);
+    outputLevelParam->endChangeGesture();
+}
+
 
 void Parameters::initParams(juce::AudioProcessorValueTreeState &apvts) {
     // Cast each parameter
