@@ -15,9 +15,13 @@
 #include "NoiseGenerator.h"
 #include "Parameters.h"
 
+// For holding down notes while the sustain pedal is pressed
+static const int SUSTAIN = -1;
+
 class Synth {
     public:
         Synth();
+        Parameters params;
         // These two functions are called right before the host starts playoing anduio and after it finishes
         // Think of them like prepareToPlay and releaseResources
         void allocateResources(double sampleRate, int samplesPerBlock);
@@ -25,13 +29,21 @@ class Synth {
         void reset();
         void render(float** outputBuffers,  int sampleCount);
         void midiMessage(uint8_t data0, uint8_t data1, uint8_t data2);
-        Parameters params;
-
     private:
         float sampleRate;
-        Voice voice;
+        std::array<Voice, MAX_VOICES> voices;
         NoiseGenerator noiseGen;
+        int lfoStep;
+        float lfo;
+        bool sustainPedalPressed;
+        void startNote(int v, int note, int velocity);
         void noteOn(int note, int velocity);
         void noteOff(int note);
-        float calcPeriod(int midiNote) const;
+        void restartMonoVoice(int note, int velocity);
+        void controlChange(uint8_t data1, uint8_t data2);
+        float calcPeriod(int v, int midiNote) const;
+        int findFreeVoice() const;
+        void shiftQueuedNotes();
+        int nextQueuedNote();
+        void updateLFO();
 };

@@ -10,9 +10,30 @@
 
 #include "Parameters.h"
 #include "Envelope.h"
+#include "Constants.h"
 
 void Parameters::updateParams(float sampleRate) {
     float inverseSampleRate = 1.0f / sampleRate;
+    const float inverseUpdateRate = inverseSampleRate * LFO_MAX;
+    float lfoRate = std::exp(7.0f * lfoRateParam->get() - 4.0f);
+    float vibratoTemp = vibratoParam->get() / 200.0f;
+    vibratoAmount = 0.2f * vibratoTemp * vibratoTemp;
+    pwmDepth = vibratoAmount;
+    // If the vibrato parameter < 0, then it is used for PWM
+    if (vibratoTemp < 0.0f) {
+        vibratoAmount = 0.0f;
+    }
+    lfoInc = lfoRate * inverseUpdateRate * float(TWO_PI);
+    // For the glide:
+    glideMode = glideModeParam->getIndex();
+    float glideRateTemp = glideRateParam->get();
+    if (glideRateTemp < 2.0f) {
+        // No glide
+        glideRate = 1.0f;
+    } else {
+        glideRate = 1.0f - std::exp(-inverseUpdateRate * std::exp(6.0f - 0.07f * glideRateTemp));
+    }
+    glideBend = glideBendParam->get();
     // For the detune:
     float semi = oscTuneParam->get();
     float cent = oscFineParam->get();
@@ -26,6 +47,14 @@ void Parameters::updateParams(float sampleRate) {
     float tuneInSemi = -36.3763f - 12.0f * octave - tuning / 100.0f;
     tune = sampleRate * std::exp(0.05776226505f * tuneInSemi);
 //    tune = (octave * 12) + (tuning / 100.0f);
+    float filterVelocity = filterVelocityParam->get();
+    if (filterVelocity < -90.0f) {
+        velocitySensitivity = 0.0f;
+        ignoreVelocity = true;
+    } else {
+        velocitySensitivity = 0.0005f * filterVelocity;
+        ignoreVelocity = false;
+    }
     
     // Update the envelope
     float envOffset = 5.5f;
@@ -46,6 +75,17 @@ void Parameters::updateParams(float sampleRate) {
     noiseMix = noiseMixTemp * 0.06f;
     // Update the oscMix param
     oscMix = oscMixParam->get() / 100.0f;
+    // Automatically adjust the volume (not sure what the magic numbers are for)
+    volumeTrim = 0.0008f * (3.2f - oscMix - 25.0f * noiseMix) * 1.5f;
+    outputLevelSmoother.setTargetValue( juce::Decibels::decibelsToGain(outputLevelParam->get()));
+}
+
+void Parameters::reset(float sampleRate) {
+    // Assume the pitch wheel is in the center position when starting, and the mod wheel is all the way down
+    pitchBend = 1.0f;
+    modWheel = 0.0f;
+    outputLevelSmoother.reset(sampleRate, 0.05);
+    outputLevelSmoother.setCurrentAndTargetValue(juce::Decibels::decibelsToGain(outputLevelParam->get()));
 }
 
 void Parameters::setCurrentProgram(int index) {

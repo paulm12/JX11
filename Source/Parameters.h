@@ -54,18 +54,34 @@ namespace ParameterID {
     #undef PARAMETER_ID
 }
 
+static constexpr int MAX_VOICES = 8;
+
 class Parameters {
     public:
         void initParams(juce::AudioProcessorValueTreeState& apvts);
         void updateParams(float sampleRate);
         void setCurrentProgram(int index);
         void createDefaultPresets();
+        void reset(float sampleRate);
         float oscMix;
         float detune;
         float tune;
+        float velocitySensitivity;
+        bool ignoreVelocity;
+        float lfoInc;
+        float vibratoAmount;
+        float pwmDepth;
         float envAttack, envDecay, envSustain, envRelease;
+        float volumeTrim;   // Used to automatically adjust the volume
+        juce::LinearSmoothedValue<float> outputLevelSmoother;
         float noiseMix;
         float pitchBend;
+        float modWheel;
+        int glideMode;
+        float glideRate;
+        float glideBend;
+        int numVoices;
+        static constexpr float ANALOG = 0.002f;
         std::vector<Preset> presets;
         int totalPresets() {
             return int(presets.size());

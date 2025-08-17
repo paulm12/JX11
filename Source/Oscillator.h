@@ -10,16 +10,14 @@
 
 #pragma once
 #include <cmath>
-
-const float PI_OVER_4 = 0.7853981633974483f;
-const float PI = 3.1415926535897932f;
-const float TWO_PI = 6.2831853071795864f;
+#include "Constants.h"
 
 class Oscillator {
     // Here phase counts from 0 up to (period /2)* pi to render the first have of the sinc, and counts back down again to 0 to render the second half
     public:
         float period = 0.0f;
         float amplitude = 1.0f;
+        float pitchModulation = 1.0f;
     
     void reset() {
         inc = 0.0f;
@@ -36,7 +34,7 @@ class Oscillator {
         // Here, the oscilaltor should start a new impulse)
         if (phase <= PI_OVER_4) {
             // Find the midpoint between the peak that just finished and the new one (depends on the period).  Ignores any change to period until the next cycle stops.
-            float halfPeriod = period / 2.0f;
+            float halfPeriod = (period / 2.0f) * pitchModulation;
             phaseMax = std::floor(0.5f + halfPeriod) - 0.5f;
             dc = 0.5f * amplitude / phaseMax;
             phaseMax *= PI;
@@ -68,6 +66,22 @@ class Oscillator {
             output = sinp / phase;
         }
         return output - dc;
+    }
+    
+    void squareWave(Oscillator& other, float newPeriod) {
+        reset();
+        if (other.inc > 0.0f) {
+            phase = other.phaseMax + other.phaseMax - other.phase;
+            inc = - other.inc;
+        } else if (other.inc < 0.0f) {
+            phase = other.phase;
+            inc = other.inc;
+        } else {
+            phase = -PI;
+            inc = PI;
+        }
+        phase += PI * newPeriod / 2.0f;
+        phaseMax = phase;
     }
     
     private:
