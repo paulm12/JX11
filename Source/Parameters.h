@@ -76,6 +76,13 @@ class Parameters {
         float volumeTrim;   // Used to automatically adjust the volume
         juce::LinearSmoothedValue<float> outputLevelSmoother;
         float noiseMix;
+        // Filter Stuff:
+        float filterKeyTracking;
+        float filterQ;
+        float filterLFODepth;
+        float filterAttack, filterDecay, filterSustain, filterRelease;
+        float filterEnvDepth;
+        // Overall Stuff:
         float pitchBend;
         float modWheel;
         int glideMode;

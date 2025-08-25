@@ -10,6 +10,7 @@
 
 #include <JuceHeader.h>
 #include "PluginProcessor.h"
+#include "Parameters.h"
 
 //==============================================================================
 /**
@@ -28,6 +29,33 @@ private:
     // This reference is provided as a quick way for your editor to
     // access the processor object that created it.
     JX11AudioProcessor& audioProcessor;
-
+    using APVTS = juce::AudioProcessorValueTreeState;
+    using SliderAttachment = APVTS::SliderAttachment;
+    using ButtonAttachment = APVTS::ButtonAttachment;
+    //=============================================================
+    // The UI Elements
+    //=============================================================
+    juce::Slider outputLevelKnob;
+    juce::Slider filterResoKnob;
+    juce::TextButton polyModeButton;
+    //=============================================================
+    // The Attachments
+    //=============================================================
+    SliderAttachment outputLevelAttachment {
+        audioProcessor.apvts,
+        ParameterID::outputLevel.getParamID(),
+        outputLevelKnob
+    };
+    SliderAttachment filterResoAttachment {
+        audioProcessor.apvts,
+        ParameterID::filterReso.getParamID(),
+        filterResoKnob
+    };
+    ButtonAttachment polyModeAttachment {
+        audioProcessor.apvts,
+        ParameterID::polyMode.getParamID(),
+        polyModeButton
+    };
+    
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (JX11AudioProcessorEditor)
 };

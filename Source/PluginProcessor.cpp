@@ -443,11 +443,11 @@ bool JX11AudioProcessor::hasEditor() const
 
 juce::AudioProcessorEditor* JX11AudioProcessor::createEditor()
 {
-//    return new JX11AudioProcessorEditor (*this);
+    return new JX11AudioProcessorEditor (*this);
     // MYR Added the following
-    auto editor = new juce::GenericAudioProcessorEditor(*this);
-    editor->setSize(500, 1050);
-    return editor;
+//    auto editor = new juce::GenericAudioProcessorEditor(*this);
+//    editor->setSize(500, 1050);
+//    return editor;
 }
 
 //==============================================================================

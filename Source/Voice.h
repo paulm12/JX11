@@ -11,6 +11,7 @@
 
 #include "Oscillator.h"
 #include "Envelope.h"
+#include "Filter.h"
 
 struct Voice {
   
@@ -20,8 +21,15 @@ struct Voice {
     float targetPeriod;
     float glideRate;
     float panLeft, panRight;
+    float cutoff;
+    float filterQ;
     Envelope env;
     Oscillator osc1, osc2;
+    Filter filter;
+    Envelope filterEnv;
+    float filterEnvDepth;
+    float filterMod;
+    float pitchBend;
     
     void reset() {
         note = 0;
@@ -31,6 +39,8 @@ struct Voice {
         osc1.reset();
         osc2.reset();
         env.reset();
+        filter.reset();
+        filterEnv.reset();
     }
     
     float render(float input) {
@@ -40,6 +50,8 @@ struct Voice {
         // Plus or minus here is a phase inversion:
         saw = (saw * 0.997f) + (sample1 - sample2);
         float output = saw + input;
+        // Apply the filter
+        output = filter.render(output);
         // Apply the envelope
         float envValue = env.nextValue();
         return output * envValue;
@@ -47,6 +59,7 @@ struct Voice {
     
     void release() {
         env.release();
+        filterEnv.release();
     }
     
     void updatePanning() {
@@ -57,5 +70,11 @@ struct Voice {
     
     void updateLFO() {
         period += glideRate * (targetPeriod - period);
+        // For the filter envelope
+        float fenv = filterEnv.nextValue();
+        // Use the exp because frequencies are logrithmic
+        float modulatedCutoff = cutoff * std::exp(filterMod + filterEnvDepth * fenv) / pitchBend;
+        modulatedCutoff = std::clamp(modulatedCutoff, 30.0f, 20000.0f);
+        filter.updateCoefficients(modulatedCutoff, filterQ);
     }
 };

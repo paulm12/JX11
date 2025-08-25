@@ -15,7 +15,20 @@ JX11AudioProcessorEditor::JX11AudioProcessorEditor (JX11AudioProcessor& p)
 {
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
-    setSize (400, 300);
+    outputLevelKnob.setSliderStyle(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag);
+    filterResoKnob.setSliderStyle(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag);
+    int textboxWidth = 100;
+    int textboxHeight = 20;
+    outputLevelKnob.setTextBoxStyle(juce::Slider::TextBoxBelow, false, textboxWidth, textboxHeight);
+    filterResoKnob.setTextBoxStyle(juce::Slider::TextBoxBelow, false, textboxWidth, textboxHeight);
+    addAndMakeVisible(outputLevelKnob);
+    addAndMakeVisible(filterResoKnob);
+    
+    polyModeButton.setButtonText("Poly");
+    polyModeButton.setClickingTogglesState(true);
+    addAndMakeVisible(polyModeButton);
+    // Should be done at the end
+    setSize (600, 400);
 }
 
 JX11AudioProcessorEditor::~JX11AudioProcessorEditor()
@@ -27,14 +40,25 @@ void JX11AudioProcessorEditor::paint (juce::Graphics& g)
 {
     // (Our component is opaque, so we must completely fill the background with a solid colour)
     g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));
-
-    g.setColour (juce::Colours::white);
-    g.setFont (juce::FontOptions (15.0f));
-    g.drawFittedText ("Hello World!", getLocalBounds(), juce::Justification::centred, 1);
+//    g.setColour (juce::Colours::white);
+//    g.setFont (juce::FontOptions (15.0f));
+//    g.drawFittedText ("Hello World!", getLocalBounds(), juce::Justification::centred, 1);
 }
 
 void JX11AudioProcessorEditor::resized()
 {
     // This is generally where you'll want to lay out the positions of any
-    // subcomponents in your editor..
+    // subcomponents in your editor.
+    int knobwidth = 100;
+    int padding = 20;
+    juce::Rectangle r(padding, padding, knobwidth, knobwidth + 20);
+    outputLevelKnob.setBounds(r);
+    
+    r = r.withX(r.getRight() + padding);
+    filterResoKnob.setBounds(r);
+    
+    int textButtonWidth = 80;
+    int textButtonHeight = 30;
+    polyModeButton.setSize(textButtonWidth, textButtonHeight);
+    polyModeButton.setCentrePosition(r.withX(r.getRight()).getCentre());
 }

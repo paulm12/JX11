@@ -37,6 +37,10 @@ class Synth {
         float lfo;
         int lastNote;
         bool sustainPedalPressed;
+        float resonanceCtrl;
+        float filterCtrl;
+        float aftertouch;
+        float filterZip;    // For smoothing filter zipper nosie
         void startNote(int v, int note, int velocity);
         void noteOn(int note, int velocity);
         void noteOff(int note);

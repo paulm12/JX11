@@ -15,8 +15,11 @@ Synth::Synth() {
     sampleRate = 44100.0f;
 }
 
-void Synth::allocateResources(double sampleRate_, int samplesPerBlock) {
+void Synth::allocateResources(double sampleRate_, int /*samplesPerBlock*/) {
     sampleRate = static_cast<float>(sampleRate_);
+    for (int v = 0; v < MAX_VOICES; ++v) {
+        voices[v].filter.sampleRate = sampleRate;
+    }
 }
 
 void Synth::deallocateResources() {
@@ -33,6 +36,9 @@ void Synth::reset() {
     lfo = 0.0f;
     lfoStep = 0;
     lastNote = 0;
+    aftertouch = 0.0f;
+    resonanceCtrl = 1.0f;
+    filterCtrl = 0.0f;
 }
 
 void Synth::render(float **outputBuffers, int sampleCount) {
@@ -46,6 +52,9 @@ void Synth::render(float **outputBuffers, int sampleCount) {
         if (voice.env.isActive()) {
             updatePeriod(voice);
             voice.glideRate = params.glideRate;
+            voice.filterQ = params.filterQ * resonanceCtrl;
+            voice.pitchBend = params.pitchBend;
+            voice.filterEnvDepth = params.filterEnvDepth;
         }
     }
     
@@ -80,6 +89,7 @@ void Synth::render(float **outputBuffers, int sampleCount) {
         Voice& voice = voices[v];
         if (!voice.env.isActive()) {
             voice.env.reset();
+            voice.filter.reset();
         }
     }
 
@@ -98,11 +108,15 @@ void Synth::updateLFO() {
     const float sine = std::sin(lfo);
     float vibratoMod = 1.0f + sine * (params.modWheel + params.vibratoAmount);
     float pwm = 1.0f + sine * (params.modWheel + params.pwmDepth);
+    float filterMod = params.filterKeyTracking + filterCtrl + (params.filterLFODepth + aftertouch) * sine;
+    filterZip += .005f * (filterMod - filterZip);
+    
     for (int v = 0; v < MAX_VOICES; ++v) {
         Voice& voice = voices[v];
         if (voice.env.isActive()) {
             voice.osc1.pitchModulation = vibratoMod;
             voice.osc2.pitchModulation = pwm;
+            voice.filterMod = filterZip;
             voice.updateLFO();
             updatePeriod(voice);
         }
@@ -118,6 +132,10 @@ void Synth::midiMessage(uint8_t data0, uint8_t data1, uint8_t data2) {
         // Control Change
         case 0xB0:
             controlChange(data1, data2);
+            break;
+        // Aftertouch
+        case 0xD0:
+            aftertouch = 0.0001 * float(data1 * data1);
             break;
         // Note off
         case 0x80:
@@ -168,12 +186,21 @@ void Synth::startNote(int v, int note, int velocity) {
     if (params.vibratoAmount == 0.0f && params.pwmDepth > 0.0f) {
         voice.osc2.squareWave(voice.osc1, voice.period);
     }
-    
+    // Amp Enveloep
     voice.env.attackMultiplier = params.envAttack;
     voice.env.decayMultiplier = params.envDecay;
     voice.env.sustainLevel = params.envSustain;
     voice.env.releaseMultiplier = params.envRelease;
     voice.env.attack();
+    // Filter Envelope
+    voice.filterEnv.attackMultiplier = params.filterAttack;
+    voice.filterEnv.decayMultiplier = params.filterDecay;
+    voice.filterEnv.sustainLevel = params.filterSustain;
+    voice.filterEnv.releaseMultiplier = params.filterRelease;
+    voice.filterEnv.attack();
+    
+    voice.cutoff = sampleRate / period;
+    voice.cutoff *= std::exp(params.velocitySensitivity * float(velocity - 64));
 }
 
 void Synth::noteOn(int note, int velocity) {
@@ -223,7 +250,10 @@ void Synth::restartMonoVoice(int note, int velocity) {
     if (params.glideMode == 0) {
         voice.period = period;
     }
-    
+    voice.cutoff = sampleRate / (period * PI);
+    if (velocity > 0) {
+        voice.cutoff *= std::exp(params.velocitySensitivity * float(velocity - 64));
+    }
     voice.env.level = SILENCE + SILENCE;
     voice.note = note;
     voice.updatePanning();
@@ -241,6 +271,17 @@ void Synth::controlChange(uint8_t data1, uint8_t data2) {
             if (!sustainPedalPressed) {
                 noteOff(SUSTAIN);
             }
+            break;
+        // Resonance
+        case 0x47:
+            resonanceCtrl = 154.0f / float(154 - data2);
+            break;
+        // Filter+
+        case 0x4A:
+            filterCtrl = 0.02f * float(data2);
+            break;
+        case 0x4B:
+            filterCtrl = -0.03 * float(data2);
             break;
         default:
             if (data1 >= 0x78) {

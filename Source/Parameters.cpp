@@ -56,7 +56,6 @@ void Parameters::updateParams(float sampleRate) {
         velocitySensitivity = 0.0005f * filterVelocity;
         ignoreVelocity = false;
     }
-    
     // Update the envelope
     float envOffset = 5.5f;
     float envMult = 0.075f;
@@ -75,9 +74,22 @@ void Parameters::updateParams(float sampleRate) {
     noiseMix = noiseMixTemp * 0.06f;
     // Update the oscMix param
     oscMix = oscMixParam->get() / 100.0f;
-    // Automatically adjust the volume (not sure what the magic numbers are for)
-    volumeTrim = 0.0008f * (3.2f - oscMix - 25.0f * noiseMix) * 1.5f;
     outputLevelSmoother.setTargetValue( juce::Decibels::decibelsToGain(outputLevelParam->get()));
+    // Filter Stuff:
+    filterKeyTracking = 0.08f * filterFreqParam->get() - 1.5f;
+    filterAttack = std::exp(-inverseUpdateRate * std::exp(envOffset - envMult * filterAttackParam->get()));
+    filterDecay = std::exp(-inverseUpdateRate * std::exp(envOffset - envMult * filterDecayParam->get()));
+    float filterSus = filterSustainParam->get() / 100.0f;
+    filterSustain = filterSus * filterSus;
+    filterRelease = std::exp(-inverseUpdateRate * std::exp(envOffset - envMult * filterReleaseParam->get()));
+    filterEnvDepth = 0.06f * filterEnvParam->get();
+    float filterReso = filterResoParam->get() / 100.0f;
+    float filterLFO = filterLFOParam->get() / 100.0f;
+    filterLFODepth = 2.5f * filterLFO * filterLFO;
+    filterQ = std::exp(3.0f * filterReso);
+    // Automatically adjust the volume (not sure what the magic numbers are for)
+    volumeTrim = 0.0008f * (3.2f - oscMix - 25.0f * noiseMix) * (1.5f - 0.5f  * filterReso);
+
 }
 
 void Parameters::reset(float sampleRate) {
