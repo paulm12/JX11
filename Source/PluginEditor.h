@@ -11,6 +11,8 @@
 #include <JuceHeader.h>
 #include "PluginProcessor.h"
 #include "Parameters.h"
+#include "RotaryKnob.h"
+#include "LookAndFeel.h"
 
 //==============================================================================
 /**
@@ -35,8 +37,9 @@ private:
     //=============================================================
     // The UI Elements
     //=============================================================
-    juce::Slider outputLevelKnob;
-    juce::Slider filterResoKnob;
+    LookAndFeel globalLNF;
+    RotaryKnob outputLevelKnob;
+    RotaryKnob filterResoKnob;
     juce::TextButton polyModeButton;
     //=============================================================
     // The Attachments
@@ -44,12 +47,12 @@ private:
     SliderAttachment outputLevelAttachment {
         audioProcessor.apvts,
         ParameterID::outputLevel.getParamID(),
-        outputLevelKnob
+        outputLevelKnob.slider
     };
     SliderAttachment filterResoAttachment {
         audioProcessor.apvts,
         ParameterID::filterReso.getParamID(),
-        filterResoKnob
+        filterResoKnob.slider
     };
     ButtonAttachment polyModeAttachment {
         audioProcessor.apvts,

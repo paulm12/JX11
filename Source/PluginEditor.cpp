@@ -13,15 +13,12 @@
 JX11AudioProcessorEditor::JX11AudioProcessorEditor (JX11AudioProcessor& p)
     : AudioProcessorEditor (&p), audioProcessor (p)
 {
+    juce::LookAndFeel::setDefaultLookAndFeel(&globalLNF);
     // Make sure that before the constructor has finished, you've set the
-    // editor's size to whatever you need it to be.
-    outputLevelKnob.setSliderStyle(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag);
-    filterResoKnob.setSliderStyle(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag);
-    int textboxWidth = 100;
-    int textboxHeight = 20;
-    outputLevelKnob.setTextBoxStyle(juce::Slider::TextBoxBelow, false, textboxWidth, textboxHeight);
-    filterResoKnob.setTextBoxStyle(juce::Slider::TextBoxBelow, false, textboxWidth, textboxHeight);
+    // editor's size to whatever you need it to be
+    outputLevelKnob.label = "Level";
     addAndMakeVisible(outputLevelKnob);
+    filterResoKnob.label = "Reso";
     addAndMakeVisible(filterResoKnob);
     
     polyModeButton.setButtonText("Poly");
