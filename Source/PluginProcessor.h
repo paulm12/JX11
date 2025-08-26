@@ -58,6 +58,7 @@ public:
     void setStateInformation (const void* data, int sizeInBytes) override;
     // New stuff added by MYR
     juce::AudioProcessorValueTreeState apvts { *this, nullptr, "Parameters", createParameterLayout() };
+    std::atomic<bool> midiLearn;
 
 private:
     // New stuff added by MYR:

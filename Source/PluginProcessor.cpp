@@ -10,6 +10,8 @@
 #include "PluginEditor.h"
 #include "Parameters.h"
 
+static const juce::Identifier pluginTag = "PLUGIN";
+
 //==============================================================================
 JX11AudioProcessor::JX11AudioProcessor()
 #ifndef JucePlugin_PreferredChannelConfigurations
@@ -122,6 +124,7 @@ void JX11AudioProcessor::releaseResources()
 // MYR added this function
 void JX11AudioProcessor::reset() {
     synth.reset();
+    midiLearn = false;
 }
 
 #ifndef JucePlugin_PreferredChannelConfigurations
@@ -208,6 +211,14 @@ void JX11AudioProcessor::handleMIDI(uint8_t data0, uint8_t data1, uint8_t data2)
 //    char s[16];
 //    snprintf(s, 16, "%02hhX %02hhX %02hhX", data0, data1, data2);
 //    DBG(s);
+    // MIDI Learn is active:
+    if (midiLearn && ((data0 & 0xF0) == 0xB0)) {
+        DBG("Learned a MIDI CC");
+        synth.resoCC = data1;
+        midiLearn = false;
+        return;
+    }
+    
     // Control Change:
     if ((data0 & 0xF0) == 0xB0) {
         if (data1 == 0x07) {
@@ -453,15 +464,21 @@ juce::AudioProcessorEditor* JX11AudioProcessor::createEditor()
 //==============================================================================
 void JX11AudioProcessor::getStateInformation (juce::MemoryBlock& destData)
 {
-    copyXmlToBinary(*apvts.copyState().createXml(), destData);
+    auto xml = std::make_unique<juce::XmlElement>(pluginTag);
+    std::unique_ptr<juce::XmlElement> parametersXML(apvts.copyState().createXml());
+    xml->addChildElement(parametersXML.release());
+    
+    copyXmlToBinary(*xml, destData);
 }
 
 void JX11AudioProcessor::setStateInformation (const void* data, int sizeInBytes)
 {
     std::unique_ptr<juce::XmlElement> xml(getXmlFromBinary(data, sizeInBytes));
-    if (xml.get() != nullptr && xml->hasTagName(apvts.state.getType())) {
-        apvts.replaceState(juce::ValueTree::fromXml(*xml));
-        parametersChanged.store(true);
+    if (xml.get() != nullptr && xml->hasTagName(pluginTag)) {
+        if (auto* parametersXML = xml->getChildByName(apvts.state.getType())) {
+            apvts.replaceState(juce::ValueTree::fromXml(*parametersXML));
+            parametersChanged.store(true);
+        }
     }
 }
 

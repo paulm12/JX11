@@ -17,7 +17,7 @@
 //==============================================================================
 /**
 */
-class JX11AudioProcessorEditor  : public juce::AudioProcessorEditor
+class JX11AudioProcessorEditor  : public juce::AudioProcessorEditor, private juce::Button::Listener, juce::Timer
 {
 public:
     JX11AudioProcessorEditor (JX11AudioProcessor&);
@@ -34,6 +34,8 @@ private:
     using APVTS = juce::AudioProcessorValueTreeState;
     using SliderAttachment = APVTS::SliderAttachment;
     using ButtonAttachment = APVTS::ButtonAttachment;
+    void buttonClicked(juce::Button* button) override;
+    void timerCallback() override;
     //=============================================================
     // The UI Elements
     //=============================================================
@@ -41,6 +43,7 @@ private:
     RotaryKnob outputLevelKnob;
     RotaryKnob filterResoKnob;
     juce::TextButton polyModeButton;
+    juce::TextButton midiLearnButton;
     //=============================================================
     // The Attachments
     //=============================================================

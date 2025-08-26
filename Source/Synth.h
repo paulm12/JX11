@@ -29,6 +29,7 @@ class Synth {
         void reset();
         void render(float** outputBuffers,  int sampleCount);
         void midiMessage(uint8_t data0, uint8_t data1, uint8_t data2);
+        uint8_t resoCC = 0x47;
     private:
         float sampleRate;
         std::array<Voice, MAX_VOICES> voices;

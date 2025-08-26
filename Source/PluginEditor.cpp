@@ -24,12 +24,18 @@ JX11AudioProcessorEditor::JX11AudioProcessorEditor (JX11AudioProcessor& p)
     polyModeButton.setButtonText("Poly");
     polyModeButton.setClickingTogglesState(true);
     addAndMakeVisible(polyModeButton);
+    // MIDI Learn Button:
+    midiLearnButton.setButtonText("MIDI Learn");
+    midiLearnButton.addListener(this);
+    addAndMakeVisible(midiLearnButton);
     // Should be done at the end
     setSize (600, 400);
 }
 
 JX11AudioProcessorEditor::~JX11AudioProcessorEditor()
 {
+    midiLearnButton.removeListener(this);
+    audioProcessor.midiLearn = false;
 }
 
 //==============================================================================
@@ -58,4 +64,21 @@ void JX11AudioProcessorEditor::resized()
     int textButtonHeight = 30;
     polyModeButton.setSize(textButtonWidth, textButtonHeight);
     polyModeButton.setCentrePosition(r.withX(r.getRight()).getCentre());
+    // For the MIDI learn button:
+    midiLearnButton.setBounds(400, 20, 100, 30);
+}
+
+void JX11AudioProcessorEditor::buttonClicked(juce::Button* button) {
+    button->setButtonText("Waiting...");
+    button->setEnabled(false);
+    audioProcessor.midiLearn = true;
+    startTimerHz(10);
+}
+
+void JX11AudioProcessorEditor::timerCallback() {
+    if (!audioProcessor.midiLearn) {
+        stopTimer();
+        midiLearnButton.setButtonText("MIDI Learn");
+        midiLearnButton.setEnabled(true);
+    }
 }
